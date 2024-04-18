@@ -6,6 +6,22 @@ import re
 import sqlite3
 
 
+# SQLite3データベースに接続
+conn = sqlite3.connect('text_data.db')
+
+# カーソルを取得
+cursor = conn.cursor()
+
+# テーブルを作成
+cursor.execute('''CREATE TABLE IF NOT EXISTS text_data (
+                    id INTEGER PRIMARY KEY,
+                    text_content TEXT
+                    )''')
+
+# 変更をコミット
+conn.commit()
+
+
 def open_file():
     file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt")])
     if file_path:
@@ -81,6 +97,79 @@ def show_search_results(results):
     result_text.insert(tk.END,results)  # ウェブページのコンテンツを表示
     result_text.config(state=tk.DISABLED)  # テキストウィジェットを読み取り専用に戻す
 
+
+def save_to_database():
+    start_index = result_text.index(tk.SEL_FIRST)
+    end_index = result_text.index(tk.SEL_LAST)
+    selected_text = result_text.get(start_index, end_index)
+    if selected_text:
+        # SQLite3データベースに接続
+        conn = sqlite3.connect('text_data.db')
+        cursor = conn.cursor()
+
+        # データベースにテキストを挿入
+        cursor.execute("INSERT INTO text_data (text_content) VALUES (?)", (selected_text,))
+        
+        # 変更をコミット
+        conn.commit()
+        
+        # データベース接続を閉じる
+        conn.close()
+
+# delete_entry をプログラムの上部で宣言
+delete_entry = None
+database_window= None
+
+def delete_selected_content():
+    global delete_entry  # delete_entry をグローバル変数として宣言
+    # 入力されたIDを取得
+    selected_id = int(delete_entry.get())
+
+    # データベースから選択された内容を削除
+    conn = sqlite3.connect('text_data.db')
+    cursor = conn.cursor()
+    
+    cursor.execute("DELETE FROM text_data WHERE id=?", (selected_id,))
+    conn.commit()
+    conn.close()
+    
+    global database_window
+    # ウィンドウを閉じる
+    database_window.destroy()
+    # ウィンドウを更新して削除後のデータを表示
+    show_database_contents()
+
+
+def show_database_contents():
+    global database_window
+    # 新しいウィンドウを作成
+    database_window = tk.Toplevel(root)
+    database_window.title("データベースの中身")
+
+    # データベースからテキストデータを取得
+    conn = sqlite3.connect('text_data.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM text_data")
+    database_contents = cursor.fetchall()
+    conn.close()
+
+    # テキストウィジェットを作成してデータベースの中身を表示
+    database_text = tk.Text(database_window, wrap=tk.WORD, width=100, height=20)
+    database_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    for row in database_contents:
+        database_text.insert(tk.END, f"{row[0]}: {row[1]}\n")
+    database_text.config(state=tk.DISABLED)  # テキストウィジェットを読み取り専用に設定
+
+
+    global delete_entry  # delete_entry をグローバル変数として宣言
+    # テキストボックスを作成してIDを入力する
+    delete_entry = tk.Entry(database_window)
+    delete_entry.pack()
+    # ボタンを作成して選択された内容を削除する関数を関連付ける
+    delete_button = tk.Button(database_window, text="選択された内容を削除", command=delete_selected_content)
+    delete_button.pack()
+
+
 root = tk.Tk()
 root.title("テキストファイルビューア")
 
@@ -109,6 +198,14 @@ search_button.pack(side=tk.LEFT, padx=5)
 save_button = tk.Button(button_frame, text="意味を保存", command=save_meaning)
 save_button.pack(side=tk.LEFT, padx=5)
 
+# ボタン: データベースに保存
+save_database_button = tk.Button(button_frame, text="データベースに保存", command=save_to_database)
+save_database_button.pack(side=tk.LEFT, padx=5)
+
+# ボタン: データベースの中身を表示
+show_database_button = tk.Button(button_frame, text="データベースの中身を表示", command=show_database_contents)
+show_database_button.pack(side=tk.LEFT, padx=5)
+
 # テキストウィジェット: 検索結果を表示
 result_text = tk.Text(frame, wrap=tk.WORD, width=50, height=1)
 result_text.pack(fill=tk.BOTH, expand=True)
@@ -124,3 +221,7 @@ edited_text.insert(tk.END, "<hamu_zer0>\n\n</hamu_zer0>")
 
 
 root.mainloop()
+
+# データベース接続を閉じる
+conn.close()
+
