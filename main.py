@@ -4,6 +4,9 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import sqlite3
+import os
+
+
 
 
 # SQLite3データベースに接続
@@ -15,43 +18,53 @@ cursor = conn.cursor()
 # テーブルを作成
 cursor.execute('''CREATE TABLE IF NOT EXISTS text_data (
                     id INTEGER PRIMARY KEY,
-                    text_content TEXT
+                    file_name TEXT,
+                    searched_word TEXT,
+                    saved_meaning TEXT,
+                    memo TEXT
                     )''')
 
 # 変更をコミット
 conn.commit()
 
-
+file_name=None
+edited_text=None
 def open_file():
     file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt")])
     if file_path:
+        global file_name
+        file_name=os.path.basename(file_path)  # ファイルパスからファイル名のみを取得
         with open(file_path, "r") as file:
             file_contents = file.read()
             text.config(state=tk.NORMAL)  # テキストウィジェットを編集可能にする
             text.delete("1.0", tk.END)  # テキストウィジェットをクリア
             text.insert(tk.END, file_contents)  # ファイル内容を表示
             text.config(state=tk.DISABLED)  # テキストウィジェットを読み取り専用に戻す
-
+word=None
 def search_word():
+    global word
     start_index = text.index(tk.SEL_FIRST)
     end_index = text.index(tk.SEL_LAST)
     selected_text = text.get(start_index, end_index)
+    word=selected_text
     if selected_text:
         search_results = google_search(selected_text)
         show_search_results(search_results)
 
+selected_text=None
 def save_meaning():
     # 単語と意味をテキストファイルの下部に保存するコードを追加
+    global edited_text
+    global selected_text
     start_index = result_text.index(tk.SEL_FIRST)
     end_index = result_text.index(tk.SEL_LAST)
     selected_text = result_text.get(start_index, end_index)
     if selected_text:
-        current_text = edited_text.get("1.0", "end-14c")  # 現在のテキストを取得
-        new_text = current_text.rstrip()  # 末尾の空白（改行含む）を削除
-        new_text += f"\n\n{selected_text}\n\n</hamu_zer0>"  # 新しい文章を追加
-        edited_text.delete("1.0", tk.END)  # テキストをクリア
-        edited_text.insert(tk.END, new_text)  # 新しいテキストを挿入
-
+        start_index = edited_text.search("<meaning>", "1.0", tk.END)  # <meaning>の開始位置を検索
+        end_index = edited_text.search("</meaning>", "1.0", tk.END)  # </meaning>の終了位置を検索
+        if start_index and end_index:
+            # <meaning>と</meaning>の間にselected_textを挿入
+            edited_text.insert(end_index, selected_text)
         
 
 def remove_html_tags(text):
@@ -99,22 +112,31 @@ def show_search_results(results):
 
 
 def save_to_database():
-    start_index = result_text.index(tk.SEL_FIRST)
-    end_index = result_text.index(tk.SEL_LAST)
-    selected_text = result_text.get(start_index, end_index)
-    if selected_text:
-        # SQLite3データベースに接続
-        conn = sqlite3.connect('text_data.db')
-        cursor = conn.cursor()
+    global edited_text
+    meaning_text = edited_text.get("1.0", tk.END)  # edited_textの全体のテキストを取得
+    meaning_pattern = r"<meaning>(.*?)</meaning>"  # <meaning>と</meaning>の間のテキストを抽出する正規表現パターン
+    match = re.search(meaning_pattern, meaning_text, re.DOTALL)  # 正規表現パターンにマッチする部分を検索
 
-        # データベースにテキストを挿入
-        cursor.execute("INSERT INTO text_data (text_content) VALUES (?)", (selected_text,))
-        
-        # 変更をコミット
-        conn.commit()
-        
-        # データベース接続を閉じる
-        conn.close()
+    if match:
+        meaning_content = match.group(1)  # マッチした部分のテキストを取得
+    else:
+        meaning_content = ""
+    global file_name
+    global word
+    if selected_text:
+        if file_name:
+            # SQLite3データベースに接続
+            conn = sqlite3.connect('text_data.db')
+            cursor = conn.cursor()
+
+            # データベースにテキストを挿入
+            cursor.execute("INSERT INTO text_data (file_name, searched_word, saved_meaning, memo) VALUES (?, ?, ?, ?)", (file_name, word, meaning_content, ""))
+            
+            # 変更をコミット
+            conn.commit()
+            
+            # データベース接続を閉じる
+            conn.close()
 
 # delete_entry をプログラムの上部で宣言
 delete_entry = None
@@ -164,7 +186,7 @@ def show_database_contents():
     database_text = tk.Text(database_window, wrap=tk.WORD, width=100, height=20)
     database_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
     for row in database_contents:
-        database_text.insert(tk.END, f"{row[0]}: {row[1]}\n")
+        database_text.insert(tk.END, f"{row[0]}: {row[1]}, {row[2]}, {row[3]}, {row[4]}\n")
     database_text.config(state=tk.DISABLED)  # テキストウィジェットを読み取り専用に設定
 
 
@@ -222,7 +244,7 @@ result_text.config(state=tk.DISABLED)  # テキストウィジェットを読み
 # テキストウィジェット: 新しいテキストを編集
 edited_text = tk.Text(frame, wrap=tk.WORD, width=50, height=1)
 edited_text.pack( fill=tk.BOTH, expand=True)
-edited_text.insert(tk.END, "<hamu_zer0>\n\n</hamu_zer0>")
+edited_text.insert(tk.END, "<meaning>\n\n</meaning>")
 
 
 
