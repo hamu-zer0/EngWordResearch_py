@@ -7,7 +7,7 @@
 ![2](https://github.com/hamu-zer0/EngWordResearch_py/assets/88695666/89641430-d2f0-4d34-ac03-3bd4c0a14acd)
 "ファイルを選択して開く"を押すとテキストファイルを選択でき、選択したファイルの中身が表示される。
 ![3](https://github.com/hamu-zer0/EngWordResearch_py/assets/88695666/62a2d87f-337a-45ae-bf35-2355cfd20516)
-左のエリアから検索した単語をカーソルで範囲指定し、"選択したテキストを検索"ボタンを押すと、上画像のように右上のエリアに検索結果が表示される。
+左のエリアから検索したい単語をカーソルで範囲指定し、"選択したテキストを検索"ボタンを押すと、上画像のように右上のエリアに検索結果が表示される。
 ![5](https://github.com/hamu-zer0/EngWordResearch_py/assets/88695666/ba2c0e23-99d2-4a34-b455-f3834f741397)
 同様に、検索結果のエリアの保存したい範囲を範囲指定し、"意味を保存"ボタンを押すと右下エリアの'meaning'で挟まれた範囲に保存される。この'meaning'で挟まれた範囲がデータベースの意味の項目として保存される。'memo'はメモの項目として保存される。
 ![6](https://github.com/hamu-zer0/EngWordResearch_py/assets/88695666/9318f1a2-8250-4559-bd1d-89c92270ca6a)
