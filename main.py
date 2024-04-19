@@ -131,6 +131,13 @@ def delete_selected_content():
     
     cursor.execute("DELETE FROM text_data WHERE id=?", (selected_id,))
     conn.commit()
+    # データベースからデータを取得し、IDを更新
+    cursor.execute("SELECT id FROM text_data ORDER BY id")
+    rows = cursor.fetchall()
+    for index, row in enumerate(rows, start=1):
+        cursor.execute("UPDATE text_data SET id=? WHERE id=?", (index, row[0]))
+    
+    conn.commit()
     conn.close()
     
     global database_window
