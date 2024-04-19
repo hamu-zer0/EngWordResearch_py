@@ -121,6 +121,15 @@ def save_to_database():
         meaning_content = match.group(1)  # マッチした部分のテキストを取得
     else:
         meaning_content = ""
+
+    memo_text = edited_text.get("1.0", tk.END)  # edited_textの全体のテキストを取得
+    memo_pattern = r"<memo>(.*?)</memo>"  # <meaning>と</meaning>の間のテキストを抽出する正規表現パターン
+    memo_match = re.search(memo_pattern, memo_text, re.DOTALL)  # 正規表現パターンにマッチする部分を検索
+
+    if match:
+        memo_content = memo_match.group(1)  # マッチした部分のテキストを取得
+    else:
+        memo_content = ""
     global file_name
     global word
     if selected_text:
@@ -130,7 +139,7 @@ def save_to_database():
             cursor = conn.cursor()
 
             # データベースにテキストを挿入
-            cursor.execute("INSERT INTO text_data (file_name, searched_word, saved_meaning, memo) VALUES (?, ?, ?, ?)", (file_name, word, meaning_content, ""))
+            cursor.execute("INSERT INTO text_data (file_name, searched_word, saved_meaning, memo) VALUES (?, ?, ?, ?)", (file_name, word, meaning_content, memo_content))
             
             # 変更をコミット
             conn.commit()
@@ -244,7 +253,7 @@ result_text.config(state=tk.DISABLED)  # テキストウィジェットを読み
 # テキストウィジェット: 新しいテキストを編集
 edited_text = tk.Text(frame, wrap=tk.WORD, width=50, height=1)
 edited_text.pack( fill=tk.BOTH, expand=True)
-edited_text.insert(tk.END, "<meaning>\n\n</meaning>")
+edited_text.insert(tk.END, "<meaning>\n\n</meaning>\n\n<memo>\n\n</memo>")
 
 
 
