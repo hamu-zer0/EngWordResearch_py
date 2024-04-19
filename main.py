@@ -43,11 +43,15 @@ def open_file():
 word=None
 def search_word():
     global word
+    global edited_text
     start_index = text.index(tk.SEL_FIRST)
     end_index = text.index(tk.SEL_LAST)
     selected_text = text.get(start_index, end_index)
     word=selected_text
     if selected_text:
+        # edited_textの内容を初期化
+        edited_text.delete("1.0", tk.END)
+        edited_text.insert(tk.END, "<meaning>\n\n</meaning>\n\n<memo>\n\n</memo>")
         search_results = google_search(selected_text)
         show_search_results(search_results)
 
