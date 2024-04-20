@@ -154,6 +154,8 @@ def save_to_database():
 # delete_entry をプログラムの上部で宣言
 delete_entry = None
 database_window= None
+search_entry=None
+search_button=None
 
 def delete_selected_content():
     global delete_entry  # delete_entry をグローバル変数として宣言
@@ -180,6 +182,29 @@ def delete_selected_content():
     database_window.destroy()
     # ウィンドウを更新して削除後のデータを表示
     show_database_contents()
+
+def search_database():
+    global search_entry
+    # テキストボックスに入力された文字列を取得
+    search_query = search_entry.get()
+
+    # データベースから検索された単語に一致するデータを取得
+    conn = sqlite3.connect('text_data.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM text_data WHERE searched_word LIKE ?", ('%' + search_query + '%',))
+    search_results = cursor.fetchall()
+    conn.close()
+
+    # 検索結果を表示するウィンドウを作成
+    search_results_window = tk.Toplevel(root)
+    search_results_window.title("検索結果")
+
+    # テキストウィジェットを作成して検索結果を表示
+    search_results_text = tk.Text(search_results_window, wrap=tk.WORD, width=100, height=20)
+    search_results_text.pack(fill=tk.BOTH, expand=True)
+    for row in search_results:
+        search_results_text.insert(tk.END, f"{row[0]}: {row[1]}, {row[2]}, {row[3]}, {row[4]}\n")
+    search_results_text.config(state=tk.DISABLED)  # テキストウィジェットを読み取り専用に設定
 
 
 def show_database_contents():
@@ -210,6 +235,15 @@ def show_database_contents():
     # ボタンを作成して選択された内容を削除する関数を関連付ける
     delete_button = tk.Button(database_window, text="選択された内容を削除", command=delete_selected_content)
     delete_button.pack()
+
+    global search_entry
+    global search_button
+    # テキストボックスを作成して検索ボタンを配置
+    search_entry = tk.Entry(database_window)
+    search_entry.pack()
+    search_button = tk.Button(database_window, text="検索", command=search_database)
+    search_button.pack()
+
 
 
 root = tk.Tk()
