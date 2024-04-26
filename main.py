@@ -156,6 +156,7 @@ delete_entry = None
 database_window= None
 search_entry=None
 search_button=None
+search_results_window=None
 
 def delete_selected_content():
     global delete_entry  # delete_entry をグローバル変数として宣言
@@ -180,6 +181,7 @@ def delete_selected_content():
     global database_window
     # ウィンドウを閉じる
     database_window.destroy()
+    search_results_window.destroy()
     # ウィンドウを更新して削除後のデータを表示
     show_database_contents()
 
@@ -195,6 +197,7 @@ def search_database():
     search_results = cursor.fetchall()
     conn.close()
 
+    global search_results_window
     # 検索結果を表示するウィンドウを作成
     search_results_window = tk.Toplevel(root)
     search_results_window.title("検索結果")
@@ -205,6 +208,14 @@ def search_database():
     for row in search_results:
         search_results_text.insert(tk.END, f"{row[0]}: {row[1]}, {row[2]}, {row[3]}, {row[4]}\n")
     search_results_text.config(state=tk.DISABLED)  # テキストウィジェットを読み取り専用に設定
+
+    global delete_entry
+    
+     # ID入力用のテキストボックスと削除ボタンを追加
+    delete_entry = tk.Entry(search_results_window)
+    delete_entry.pack()
+    delete_button = tk.Button(search_results_window, text="選択された内容を削除", command=delete_selected_content)
+    delete_button.pack()
 
 
 def show_database_contents():
