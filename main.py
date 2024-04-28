@@ -147,7 +147,7 @@ def save_to_database():
             
             # 変更をコミット
             conn.commit()
-            
+
             # データベース接続を閉じる
             conn.close()
 
@@ -217,17 +217,17 @@ def search_database():
     delete_button = tk.Button(search_results_window, text="選択された内容を削除", command=delete_selected_content)
     delete_button.pack()
 
-
-def show_database_contents():
+def show_searchword_sorted_contents():
     global database_window
+    database_window.destroy()
     # 新しいウィンドウを作成
     database_window = tk.Toplevel(root)
-    database_window.title("データベースの中身")
+    database_window.title("データベースの中身 (Search Word 昇順)")
 
-    # データベースからテキストデータを取得
+    # データベースからテキストデータを取得し、searched_wordで昇順にソート
     conn = sqlite3.connect('text_data.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM text_data")
+    cursor.execute("SELECT * FROM text_data ORDER BY searched_word")
     database_contents = cursor.fetchall()
     conn.close()
 
@@ -238,6 +238,54 @@ def show_database_contents():
         database_text.insert(tk.END, f"{row[0]}: {row[1]}, {row[2]}, {row[3]}, {row[4]}\n")
     database_text.config(state=tk.DISABLED)  # テキストウィジェットを読み取り専用に設定
 
+    # 新しいボタンを作成して、searched_wordの昇順で表示し直す機能をトリガーする
+    reorder_button = tk.Button(database_window, text="id昇順", command=show_database_contents)
+    reorder_button.pack()
+
+    global delete_entry  # delete_entry をグローバル変数として宣言
+    # テキストボックスを作成してIDを入力する
+    delete_entry = tk.Entry(database_window)
+    delete_entry.pack()
+    # ボタンを作成して選択された内容を削除する関数を関連付ける
+    delete_button = tk.Button(database_window, text="選択された内容を削除", command=delete_selected_content)
+    delete_button.pack()
+
+    global search_entry
+    global search_button
+    # テキストボックスを作成して検索ボタンを配置
+    search_entry = tk.Entry(database_window)
+    search_entry.pack()
+    search_button = tk.Button(database_window, text="検索", command=search_database)
+    search_button.pack()
+
+
+def show_database_contents():
+    global database_window
+    if database_window==None:
+        pass
+    else:
+        database_window.destroy()
+    # 新しいウィンドウを作成
+    database_window = tk.Toplevel(root)
+    database_window.title("データベースの中身")
+
+    # データベースからテキストデータを取得
+    conn = sqlite3.connect('text_data.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM text_data ORDER BY id")
+    database_contents = cursor.fetchall()
+    conn.close()
+
+    # テキストウィジェットを作成してデータベースの中身を表示
+    database_text = tk.Text(database_window, wrap=tk.WORD, width=100, height=20)
+    database_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    for row in database_contents:
+        database_text.insert(tk.END, f"{row[0]}: {row[1]}, {row[2]}, {row[3]}, {row[4]}\n")
+    database_text.config(state=tk.DISABLED)  # テキストウィジェットを読み取り専用に設定
+
+    # 新しいボタンを作成して、searched_wordの昇順で表示し直す機能をトリガーする
+    reorder_button = tk.Button(database_window, text="単語昇順", command=show_searchword_sorted_contents)
+    reorder_button.pack()
 
     global delete_entry  # delete_entry をグローバル変数として宣言
     # テキストボックスを作成してIDを入力する
